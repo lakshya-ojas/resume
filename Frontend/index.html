@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Upload and Download</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Optional: Custom styles */
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+        }
+        .status-message {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload File</h1>
+        <div class="input-group mb-3">
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="fileInput">
+                <label class="custom-file-label" for="fileInput">Choose file</label>
+            </div>
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" onclick="uploadFile()">Upload</button>
+            </div>
+        </div>
+        <p id="uploadStatus" class="status-message"></p>
+
+        <hr>
+        <br>
+        <br><br><br>
+        <br><br>
+        
+        <!-- <h1>Download File</h1>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="filenameInput" placeholder="Enter filename">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" onclick="downloadFile()">Download</button>
+            </div>
+        </div>
+        <p id="downloadStatus" class="status-message"></p> -->
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('http://localhost:5000/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadStatus').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('uploadStatus').innerText = 'Error uploading file';
+            });
+        }
+
+        function downloadFile() {
+            const filename = document.getElementById('filenameInput').value;
+
+            fetch(`http://localhost:5000/download/${filename}`, {
+                method: 'GET'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('File not found');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.getElementById('downloadStatus').innerText = 'File downloaded successfully';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('downloadStatus').innerText = 'Error downloading file';
+            });
+        }
+    </script>
+</body>
+</html>
