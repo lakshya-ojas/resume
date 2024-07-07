@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>File Upload and Download</title>
+    <title>File Upload and Search</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
@@ -21,8 +21,8 @@
         <h1>Upload File</h1>
         <div class="input-group mb-3">
             <div class="custom-file">
-                <input type="file" class="custom-file-input" id="fileInput">
-                <label class="custom-file-label" for="fileInput">Choose file</label>
+                <input type="file" class="custom-file-input" id="fileInput" onchange="updateFileName()">
+                <label class="custom-file-label" for="fileInput" id="fileNameLabel">Choose file</label>
             </div>
             <div class="input-group-append">
                 <button class="btn btn-primary" type="button" onclick="uploadFile()">Upload</button>
@@ -32,17 +32,33 @@
 
         <hr>
         <br>
-        <br><br><br>
-        <br><br>
-        
-        <!-- <h1>Download File</h1>
+        <br>
+        <br>
+        <br>
+        <br>
+
+
+        <!-- Search Section -->
+        <h1>Search Text</h1>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="searchInput" placeholder="Enter text to search">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" onclick="searchText()">Search</button>
+            </div>
+        </div>
+        <p id="searchStatus" class="status-message"></p>
+
+        <!-- Download File Section (if needed) -->
+        <!-- 
+        <h1>Download File</h1>
         <div class="input-group mb-3">
             <input type="text" class="form-control" id="filenameInput" placeholder="Enter filename">
             <div class="input-group-append">
                 <button class="btn btn-primary" type="button" onclick="downloadFile()">Download</button>
             </div>
         </div>
-        <p id="downloadStatus" class="status-message"></p> -->
+        <p id="downloadStatus" class="status-message"></p> 
+        -->
     </div>
 
     <!-- Bootstrap JS and dependencies -->
@@ -51,6 +67,12 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
+        function updateFileName() {
+            const fileInput = document.getElementById('fileInput');
+            const fileNameLabel = document.getElementById('fileNameLabel');
+            fileNameLabel.innerText = fileInput.files[0].name;
+        }
+
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
@@ -61,43 +83,63 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                document.getElementById('uploadStatus').innerText = data.message;
+                console.log('Response data:', data);
+                document.getElementById('uploadStatus').innerText = `File '${data.filename}' uploaded successfully`;
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error uploading file:', error);
                 document.getElementById('uploadStatus').innerText = 'Error uploading file';
             });
         }
 
-        function downloadFile() {
-            const filename = document.getElementById('filenameInput').value;
+        function searchText() {
+            const searchText = document.getElementById('searchInput').value;
 
-            fetch(`http://localhost:5000/download/${filename}`, {
-                method: 'GET'
+            fetch('http://localhost:5000/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: searchText })
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('File not found');
+                    throw new Error('Search failed');
                 }
-                return response.blob();
+                return response.json();
             })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.getElementById('downloadStatus').innerText = 'File downloaded successfully';
+            .then(data => {
+                displaySearchResults(data);
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('downloadStatus').innerText = 'Error downloading file';
+                document.getElementById('searchStatus').innerText = 'Error searching text';
             });
+        }
+
+        function displaySearchResults(results) {
+            const searchStatus = document.getElementById('searchStatus');
+            searchStatus.innerHTML = '';
+
+            if (results.length === 0) {
+                searchStatus.innerText = 'No results found.';
+            } else {
+                const resultList = document.createElement('ul');
+                results.forEach(result => {
+                    const listItem = document.createElement('li');
+                   const json_String = JSON.stringify(result);
+                    listItem.textContent = json_String;
+                    resultList.appendChild(listItem);
+                });
+                searchStatus.appendChild(resultList);
+            }
         }
     </script>
 </body>

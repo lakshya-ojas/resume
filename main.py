@@ -9,6 +9,7 @@ import json
 import os
 import sys
 from database_handler import create_table, insert_data
+from summarize_chatgpt import get_summery
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_lg')
@@ -29,6 +30,18 @@ def convert_docx_to_text(docx_path):
     doc = docx.Document(docx_path)
     docx_text = '\n'.join([para.text for para in doc.paragraphs])
     return docx_text
+
+#work on it
+def extract_text_from_doc(doc_file):
+    if os.path.exists(doc_file):
+        doc = docx.Document(doc_file)
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        return '\n'.join(full_text)
+    else:
+        raise FileNotFoundError(f"File '{doc_file}' not found.")
+
 
 def convert_txt_to_text(txt_path):
     """Converts a TXT file to text."""
@@ -94,41 +107,22 @@ def convert_file_to_text(input_path, output_path):
         text = convert_docx_to_text(input_path)
     elif input_path.endswith('.txt'):
         text = convert_txt_to_text(input_path)
+    elif input_path.endswith(".doc"):
+        text = extract_text_from_doc(input_path)
     else:
         raise ValueError("Unsupported file type. Only PDF, DOCX, and TXT files are supported.")
     
-    save_text_to_file(text, output_path)
+    print("Success in extracting the text from the file")
+    save_text_to_file(text, "./output/ExtractedText.txt")
+
     summarized_text = text_summarizer(text)
+    # summarized_text = get_summery(text)
+    print("Summarized text is done using spaCy")
+
     save_text_to_file(summarized_text, "./output/summarize_text.txt")
-    
+    print("File is saved in the output folder for summarize and extracted text")
+
     entities = extract_entities(text)
+    print("User information entities are extracted from the text")
+
     return text, summarized_text, entities
-
-def main():
-    if len(sys.argv) != 3:
-        print("Usage: python main.py <pdf_path> <output_directory>")
-        return
-    
-    input_path = sys.argv[1]
-    output_dir = sys.argv[2]
-    # pdf_path = r'./Resume.pdf'  # Replace with your PDF file path
-    # txt_path = 'TextExtract.txt'   # Replace with your desired output text file path
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Generate output paths
-    filename = os.path.basename('TextExtract')
-    output_path = os.path.join(output_dir, filename + ".txt")
-
-
-    text, summarized_text, entities = convert_file_to_text(input_path, output_path)
-    
-    create_table()  # Create the table if it doesn't exist
-    
-    # Insert data into the database
-    insert_data(json.dumps(entities), summarized_text, input_path)
-    print("Data is inserted into the database")
-
-if __name__ == "__main__":
-    main()
