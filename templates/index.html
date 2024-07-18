@@ -79,7 +79,7 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            fetch('http://localhost:5000/upload', {
+            fetch('http://192.168.6.100:8000/upload', {
                 method: 'POST',
                 body: formData
             })
@@ -102,7 +102,7 @@
         function searchText() {
             const searchText = document.getElementById('searchInput').value;
 
-            fetch('http://localhost:5000/search', {
+            fetch('http://192.168.6.100:8000/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -116,6 +116,7 @@
                 return response.json();
             })
             .then(data => {
+                console.log(data);
                 displaySearchResults(data);
             })
             .catch(error => {
@@ -123,7 +124,7 @@
                 document.getElementById('searchStatus').innerText = 'Error searching text';
             });
         }
-
+        
         function displaySearchResults(results) {
             const searchStatus = document.getElementById('searchStatus');
             searchStatus.innerHTML = '';
@@ -132,12 +133,9 @@
                 searchStatus.innerText = 'No results found.';
             } else {
                 const resultList = document.createElement('ul');
-                results.forEach(result => {
-                    const listItem = document.createElement('li');
-                   const json_String = JSON.stringify(result);
-                    listItem.textContent = json_String;
-                    resultList.appendChild(listItem);
-                });
+                const listItem = document.createElement('li');
+                listItem.textContent = results.result;
+                resultList.appendChild(listItem);
                 searchStatus.appendChild(resultList);
             }
         }
