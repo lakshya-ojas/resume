@@ -3,7 +3,7 @@ from generate_embedding import generate_embedding
 
 # MongoDB connection setup
 client = pymongo.MongoClient("mongodb+srv://lakshyaagrawal:Lakshya12@cluster0.suugkij.mongodb.net/")
-db = client.Ojas_database
+db = client.OJAS
 collection = db.resume
 
 # Example query
